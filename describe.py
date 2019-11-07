@@ -20,13 +20,13 @@ def describe(_file):
         if df[col_name].dtypes == 'int64' or df[col_name].dtypes == 'float64':
             col = df[col_name].dropna().sort_values().reset_index(drop=True)
             col_length = len(col)
-            Q_1 = ((col_length - 1) / 4)
-            Q_2 = ((col_length - 1) / 4) * 2 if (((col_length - 1) / 4) * 2).is_integer() \
+            print(f'LE FUCKING FUCK = \n{col.describe(percentiles=[.25, ])}')
+            Q_1 = ((col_length + 1) / 4)
+            Q_2 = ((col_length + 1) / 4) * 2 if (((col_length + 1) / 4) * 2).is_integer() \
                 else math.trunc(((col_length - 1) / 4) * 2)
             Q_3 = ((col_length - 1) / 4) * 3 if (((col_length - 1) / 4) * 3).is_integer() \
                 else math.trunc(((col_length - 1) / 4) * 3)
-            print()
-            print(f'raw {((col_length) / 4)}, round down {math.trunc(((col_length) / 4))}, round up {math.ceil(((col_length) / 4))}')
+            print(f'raw {((col_length - 1) / 4)}, round down {math.trunc(((col_length - 1) / 4))}, round up {math.ceil(((col_length - 1) / 4))}')
             res_count[col_name] = col_length - col.isna().sum()
             res_mean[col_name] = col.sum() / col_length
             res_std[col_name] = (sum([((res_mean[col_name] - val) ** 2) for val in col]) / (col_length - 1)) ** (1 / 2)
@@ -34,8 +34,10 @@ def describe(_file):
             if Q_1.is_integer():
                 res_25[col_name] = col.loc[Q_1]
             else:
-                print(f'col.loc[399] = {col.loc[399]} col.loc[400] = {col.loc[400]} /2 = {(col.loc[399]+col.loc[400])/2}')
-                res_25[col_name] = col.loc[math.trunc(col_length / 4)]
+                print(f'col.loc[loc] = {col.loc[math.trunc(((col_length - 1) / 4))]}\n'
+                      f'col.loc[loc] = {col.loc[math.ceil(((col_length - 1) / 4))]}\n'
+                      f'/2 = {(col.loc[math.trunc(((col_length - 1) / 4))]+col.loc[math.ceil(((col_length - 1) / 4))])/2}\n')
+                res_25[col_name] = (col.loc[math.trunc(((col_length + 1) / 4))] + col.loc[math.ceil(((col_length + 1) / 4))]) / 2
             res_50[col_name] = col.loc[Q_2]
             res_75[col_name] = col.loc[Q_3]
             res_max[col_name] = col.loc[col_length - 1]
