@@ -6,11 +6,10 @@ from describe import describe
 import matplotlib.pyplot as plt
 
 
-def std_bar_chart_plot(df, args):
+def std_bar_chart_plot(df):
     """
     Plots a bar chart from a DataFrame based on Standard Derivation
-    :param df: A DataFrame containing standard derivation value, index 'Std' expected
-    :param args: An args object (from library argparse / parse_args()), method 'save' expected
+    :param df: A DataFrame containing standard derivation values, index 'Std' expected
     """
     try:
         df = df.drop(columns=['Index'])
@@ -24,12 +23,6 @@ def std_bar_chart_plot(df, args):
         plt.bar(list(df), df.loc['Std', :].values)
         plt.xticks(rotation='vertical')
         plt.tight_layout()
-        try:
-            if args.save:
-                plt.savefig(os.path.join(os.getcwd(), 'std_bar_chart.png'))
-        except AttributeError:
-            print(f'Could not saved, method "save" expected in object args')
-        plt.show()
 
 
 def parsing():
@@ -54,6 +47,11 @@ if __name__ == '__main__':
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
         df = pd.read_csv(file)
         df_described = describe(df)
-        std_bar_chart_plot(df_described, args)
+        std_bar_chart_plot(df_described)
+
+        if args.save:
+            plt.savefig(os.path.join(os.getcwd(), 'std_bar_chart.png'))
+
+        plt.show()
     else:
         sys.exit(print(f'\x1b[1;37;41mThe selected file must be a csv file \x1b[0m\n'))
