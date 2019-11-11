@@ -7,7 +7,18 @@ import matplotlib.pyplot as plt
 
 
 def plotting(df):
-    
+    try:
+        df = df.drop(columns=['Index'])
+    except KeyError:
+        pass
+
+    df = df.sort_values(by='Std', axis=1, ascending=True)
+    plt.style.use('ggplot')
+    plt.title('Standard Deviation plot (ascending sorted)\nFrom the most to the least homogeneous')
+    plt.bar(list(df), df.loc['Std', :].values)
+    plt.xticks(rotation='vertical')
+    plt.tight_layout()
+    plt.show()
 
 
 def parsing():
@@ -29,7 +40,8 @@ if __name__ == '__main__':
 
     file = os.path.join(os.getcwd(), args.csv_file)
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
-        df_described = describe(file)
+        df = pd.read_csv(file)
+        df_described = describe(df)
         plotting(df_described)
     else:
         sys.exit(print(f'\x1b[1;37;41mThe selected file must be a csv file \x1b[0m\n'))
