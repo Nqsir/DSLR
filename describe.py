@@ -87,16 +87,14 @@ def count(col, col_length):
     return col_length - col.isna().sum()
 
 
-def describe(file):
+def describe(df):
     """
     Describes a DataFrame, reproduces the behavior of the pandas DataFrame method describe() i.e. Count, Mean, Std, Min,
     25%, 50% and 75% quartiles, and Max
     Doesn't take into account NaN values
-    :param file: A DataFrame
+    :param df: A DataFrame
     :return: a new DataFrame with metric for each numerical feature
     """
-
-    df = pd.read_csv(file)
 
     res_count = {}
     res_mean = {}
@@ -142,9 +140,9 @@ if __name__ == '__main__':
 
     file = os.path.join(os.getcwd(), args.csv_file)
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
-        df_described = describe(file)
+        df = pd.read_csv(file)
+        df_described = describe(df)
         if args.compare:
-            df = pd.read_csv(file)
             print(f'\x1b[1;30;43mPandas describe():\x1b[0m \n\n{df.describe()}\n\n')
         print(f'\x1b[1;30;42mDSLR describe.py:\x1b[0m \n\n{df_described}\n\n')
     else:
