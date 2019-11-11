@@ -12,6 +12,7 @@ def quartile_1(col, col_length):
     :param col_length: column's length
     :return: First quartile
     """
+
     Q1 = (col_length - 1) / 4
     calc = ((Q1 - math.trunc(Q1)) * 100) / 25
     if Q1.is_integer():
@@ -27,6 +28,7 @@ def quartile_2(col, col_length):
     :param col_length: column's length
     :return: Second quartile
     """
+
     Q2 = ((col_length - 1) / 4) * 2
     calc = ((Q2 - math.trunc(Q2)) * 100) / 25
     if Q2.is_integer():
@@ -42,6 +44,7 @@ def quartile_3(col, col_length):
     :param col_length: column's length
     :return: Third quartile
     """
+
     Q3 = ((col_length - 1) / 4) * 3
     calc = ((Q3 - math.trunc(Q3)) * 100) / 25
     if Q3.is_integer():
@@ -58,6 +61,7 @@ def std(col, col_length, mean):
     :param mean: mean of the col values
     :return: the Standard deviation of the observations
     """
+
     return (sum([((mean - val) ** 2) for val in col]) / (col_length - 1)) ** (1 / 2)
 
 
@@ -68,6 +72,7 @@ def mean(col, col_length):
     :param col_length: column's length
     :return: the mean
     """
+
     return col.sum() / col_length
 
 
@@ -78,17 +83,21 @@ def count(col, col_length):
     :param col_length: column's length
     :return: number of non-NaN values
     """
+
     return col_length - col.isna().sum()
 
 
-def describe(df):
+def describe(file):
     """
     Describes a DataFrame, reproduces the behavior of the pandas DataFrame method describe() i.e. Count, Mean, Std, Min,
     25%, 50% and 75% quartiles, and Max
     Doesn't take into account NaN values
-    :param df: A DataFrame
+    :param file: A DataFrame
     :return: a new DataFrame with metric for each numerical feature
     """
+
+    df = pd.read_csv(file)
+
     res_count = {}
     res_mean = {}
     res_std = {}
@@ -133,9 +142,9 @@ if __name__ == '__main__':
 
     file = os.path.join(os.getcwd(), args.csv_file)
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
-        df = pd.read_csv(file)
-        df_described = describe(df)
+        df_described = describe(file)
         if args.compare:
+            df = pd.read_csv(file)
             print(f'\x1b[1;30;43mPandas describe():\x1b[0m \n\n{df.describe()}\n\n')
         print(f'\x1b[1;30;42mDSLR describe.py:\x1b[0m \n\n{df_described}\n\n')
     else:
