@@ -129,6 +129,7 @@ def parsing():
     parser = argparse.ArgumentParser(prog='py describe.py')
     parser.add_argument('csv_file', help='A csv file containing data')
     parser.add_argument('-c', '--compare', action='store_true', help='Comparative mode', default=False)
+    parser.add_argument('-s', '--save', action='store_true', help='Saving metrics', default=False)
     _args = parser.parse_args()
 
     return _args
@@ -145,5 +146,7 @@ if __name__ == '__main__':
         if args.compare:
             print(f'\x1b[1;30;43mPandas describe():\x1b[0m \n\n{df.describe()}\n\n')
         print(f'\x1b[1;30;42mDSLR describe.py:\x1b[0m \n\n{df_described}\n\n')
+        if args.save:
+            df_described.to_excel(f'{os.path.basename(file).replace(".csv", "")}.xlsx')
     else:
         sys.exit(print(f'\x1b[1;37;41mThe selected file must be a csv file \x1b[0m\n'))
