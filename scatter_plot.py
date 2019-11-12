@@ -2,7 +2,6 @@ import argparse
 import os
 import sys
 import pandas as pd
-from describe import describe
 import matplotlib.pyplot as plt
 
 
@@ -13,20 +12,18 @@ def scatter_plot(df):
     """
 
     try:
-        df = df.drop(columns=['Index'])
+        df = df.drop(columns=['Hogwarts House', 'First Name', 'Last Name', 'Birthday', 'Best Hand', 'Index'])
     except KeyError:
         pass
 
-    plt.style.use('ggplot')
-    col = df.columns
-    colors = ['black', 'gray', 'brown', 'red', 'peru', 'yellow', 'chartreuse', 'darkgreen', 'turquoise', 'teal',
-              'navy', 'magenta', 'pink']
-
-    for e, c in enumerate(col):
-        plt.scatter(df.loc[:, c], df.index, label=c, c=f'{colors[e%13]}')
-
-    plt.legend()
-    plt.tight_layout(True)
+    plt.matshow(abs(df.corr()))
+    plt.xticks(range(len(df.columns)), df.columns, rotation=45)
+    plt.yticks(range(len(df.columns)), df.columns)
+    plt.gca().set_xticks([x - 0.5 for x in plt.gca().get_xticks()][1:], minor='true')
+    plt.gca().set_yticks([y - 0.5 for y in plt.gca().get_yticks()][1:], minor='true')
+    plt.grid(which='minor')
+    plt.colorbar()
+    plt.gcf().subplots_adjust(top=3)
 
 
 def parsing():
@@ -50,8 +47,8 @@ if __name__ == '__main__':
     file = os.path.join(os.getcwd(), args.csv_file)
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
         df = pd.read_csv(file)
-        df_described = describe(df)
-        scatter_plot(df_described)
+        # df_described = describe(df)
+        scatter_plot(df)
 
         if args.save:
             plt.savefig(os.path.join(os.getcwd(), 'scatter_plot.png'))

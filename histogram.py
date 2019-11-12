@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def std_bar_chart_plot(df):
     """
     Plots a bar chart from a DataFrame based on Standard Derivation
-    :param df: A DataFrame containing standard derivation values, index 'Std' expected
+    :param df: A DataFrame containing standard derivation values, index 'Std', 'Max' and 'Min' expected
     """
     try:
         df = df.drop(columns=['Index'])
