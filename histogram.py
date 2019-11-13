@@ -46,7 +46,6 @@ def parsing():
 
 
 if __name__ == '__main__':
-    # Parse argument
     args = parsing()
 
     file = os.path.join(os.getcwd(), args.csv_file)
