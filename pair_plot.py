@@ -2,22 +2,22 @@ import argparse
 import os
 import sys
 import pandas as pd
-from pandas.plotting import scatter_matrix
-from describe import describe
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 
 def pair_plot(df):
     """
-    :param df:
-    :return:
+    Display a pair plot from a DataFrame
+    :param df: A DataFrame
     """
-    df = df.drop(index=['Count', 'Min', 'Max'], columns=['Index'])
-    print(df)
-    plt.style.use('ggplot')
-    sns.pairplot(df)
-    # scatter_matrix(df)
+    try:
+        df = df.drop(columns=['Index']).dropna().reset_index(drop=True)
+    except KeyError:
+        pass
+    plt.style.use('fast')
+    sns.pairplot(df, hue='Hogwarts House')
+    plt.subplots_adjust(left=0.06, bottom=0.06, right=0.93, top=0.95)
 
 
 def parsing():
@@ -35,14 +35,12 @@ def parsing():
 
 
 if __name__ == '__main__':
-    # Parse argument
     args = parsing()
 
     file = os.path.join(os.getcwd(), args.csv_file)
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
         df = pd.read_csv(file)
-        df_described = describe(df)
-        pair_plot(df_described)
+        pair_plot(df)
 
         if args.save:
             plt.savefig(os.path.join(os.getcwd(), 'pair_plot.png'))
