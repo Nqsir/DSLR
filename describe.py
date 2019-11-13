@@ -89,8 +89,8 @@ def count(col, col_length):
 
 def describe(df):
     """
-    Describes a DataFrame, reproduces the behavior of the pandas DataFrame method describe() i.e. Count, Mean, Std, Min,
-    25%, 50% and 75% quartiles, and Max
+    Describes a DataFrame, reproduces the behavior of the pandas DataFrame method describe() i.e. Count, Mean, Std, Var,
+    Min, 25%, 50% and 75% quartiles, and Max
     Doesn't take into account NaN values
     :param df: A DataFrame
     :return: a new DataFrame with metric for each numerical feature
@@ -99,6 +99,7 @@ def describe(df):
     res_count = {}
     res_mean = {}
     res_std = {}
+    res_var = {}
     res_min = {}
     res_25 = {}
     res_50 = {}
@@ -111,13 +112,14 @@ def describe(df):
             res_count[col_name] = count(col, col_length)
             res_mean[col_name] = mean(col, col_length)
             res_std[col_name] = std(col, col_length, res_mean[col_name])
+            res_var[col_name] = res_std[col_name] ** 2
             res_min[col_name] = col.loc[0]
             res_25[col_name] = quartile_1(col, col_length)
             res_50[col_name] = quartile_2(col, col_length)
             res_75[col_name] = quartile_3(col, col_length)
             res_max[col_name] = col.loc[col_length - 1]
-    return pd.DataFrame([res_count, res_mean, res_std, res_min, res_25, res_50, res_75, res_max],
-                        index=['Count', 'Mean', 'Std', 'Min', '25%', '50%', '75%', 'Max'])
+    return pd.DataFrame([res_count, res_mean, res_std, res_var, res_min, res_25, res_50, res_75, res_max],
+                        index=['Count', 'Mean', 'Std', 'Var', 'Min', '25%', '50%', '75%', 'Max'])
 
 
 def parsing():
@@ -136,7 +138,6 @@ def parsing():
 
 
 if __name__ == '__main__':
-    # Parse argument
     args = parsing()
 
     file = os.path.join(os.getcwd(), args.csv_file)

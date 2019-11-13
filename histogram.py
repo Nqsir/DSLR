@@ -9,18 +9,24 @@ import matplotlib.pyplot as plt
 def std_bar_chart_plot(df):
     """
     Plots a bar chart from a DataFrame based on Standard Derivation
-    :param df: A DataFrame containing standard derivation values, index 'Std' expected
+    :param df: A DataFrame containing standard derivation values, index 'Std', 'Max' and 'Min' expected
     """
     try:
         df = df.drop(columns=['Index'])
     except KeyError:
         pass
 
-    if 'Std' in df.index:
-        df = df.sort_values(by='Std', axis=1, ascending=True)
+    if 'Std' in df.index and 'Max' in df.index and 'Min' in df.index:
+        standards = df.loc['Std', :]
+        range_ = df.loc['Max', :] - df.loc['Min', :]
+        perc = (standards / range_) * 100
+        perc = perc.sort_values()
         plt.style.use('ggplot')
+        plt.figure(figsize=[7, 6])
+        plt.gca().set_ylim([0, 35])
         plt.title('Standard Deviation plot (ascending sorted)\nFrom the most to the least homogeneous')
-        plt.bar(list(df), df.loc['Std', :].values)
+        plt.ylabel('Percentage (Standard deviation / (max - min))')
+        plt.bar(perc.index, perc, width=0.5)
         plt.xticks(rotation='vertical')
         plt.tight_layout()
 
@@ -40,7 +46,6 @@ def parsing():
 
 
 if __name__ == '__main__':
-    # Parse argument
     args = parsing()
 
     file = os.path.join(os.getcwd(), args.csv_file)
