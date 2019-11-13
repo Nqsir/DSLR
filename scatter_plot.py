@@ -24,6 +24,7 @@ def scatter_plot(df):
     df_described = describe(df)
     # -------------- TEST
     print(df_described.loc['Mean', 'Astronomy'])
+    print(df.var())
     print(df.cov())
     for col_name in columns:
         if df[col_name].dtypes == 'int64' or df[col_name].dtypes == 'float64':
@@ -34,12 +35,15 @@ def scatter_plot(df):
                     i = 0
                     j = 0
                     sum_ = 0
+                    test = 0
                     while i < df_described.loc['Count', col_name] and j < df_described.loc['Count', col]:
-                        sum_ += (df.loc[i, col_name] - (1 - df_described.loc['Mean', col_name])) *\
-                                (df.loc[j, col] - (1 - df_described.loc['Mean', col]))
+                        sum_ += ((df.loc[i, col_name] - df_described.loc['Mean', col_name]) *
+                                 (df.loc[j, col] - df_described.loc['Mean', col]))
+                        test += (df.loc[j, col] - df_described.loc['Mean', col])
                         i += 1
                         j += 1
-                    print(f'sum_ = {sum_}')
+                    print(f'var = {df_described.loc["Var", col]}')
+                    print(f'covariance = {sum_ / (i - 1)}')
                     # one = sum([abs(val - df_described.loc['Mean', col_name]) for val in df[col_name]])
                     # two = sum([abs(val - df_described.loc['Mean', col]) for val in df[col]])
                     # print(one)
