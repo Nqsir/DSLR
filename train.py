@@ -1,7 +1,6 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import scipy.optimize as opt
 import pandas as pd
 import argparse
 import os
@@ -11,62 +10,74 @@ import sys
 
 def train(df):
     try:
-        df = df.dropna().reset_index(drop=True)
+        df = df.drop(columns=['Index']).dropna().reset_index(drop=True)
     except KeyError:
         pass
 
-    house_dict = {'Ravenclaw': 0, 'Slytherin': 1, 'Gryffindor': 2, 'Hufflepuff': 3}
-    df = df[['Hogwarts House', 'Divination', 'Transfiguration', 'Muggle Studies', 'Charms']]
-    print(df)
-    df['Hogwarts House'] = np.where(df['Hogwarts House'] == 'Ravenclaw', 1, df['Hogwarts House'])
-    df['Hogwarts House'] = np.where(df['Hogwarts House'] == 'Slytherin', 0, df['Hogwarts House'])
-    df['Hogwarts House'] = np.where(df['Hogwarts House'] == 'Gryffindor', 0, df['Hogwarts House'])
-    df['Hogwarts House'] = np.where(df['Hogwarts House'] == 'Hufflepuff', 0, df['Hogwarts House'])
-    print(df)
-    print(df.shape)
-    print(list(df.columns))
+    house_list = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff']
+    list_x_test = ['Hogwarts House', 'Astronomy', 'Herbology', 'Defense Against the Dark Arts', 'Ancient Runes']
+
+    print(f'Test ------------------------------ {list_x_test[1:]}')
+    x = df[list_x_test[1:]]
+    y = pd.DataFrame(df['Hogwarts House'])
+    y['Hogwarts House'] = np.where(y['Hogwarts House'] == house_list[0], 1, y['Hogwarts House'])
+    y['Hogwarts House'] = np.where(y['Hogwarts House'] == house_list[1], 2, y['Hogwarts House'])
+    y['Hogwarts House'] = np.where(y['Hogwarts House'] == house_list[2], 3, y['Hogwarts House'])
+    y['Hogwarts House'] = np.where(y['Hogwarts House'] == house_list[3], 4, y['Hogwarts House'])
+
+    from sklearn.model_selection import train_test_split
+    x_train, x_test, y_train, y_test = train_test_split(x, y['Hogwarts House'].astype('int'),
+                                                        test_size=0.2, random_state=0)
+
     from sklearn.linear_model import LogisticRegression
-    X = df[['Divination', 'Transfiguration', 'Muggle Studies', 'Charms']]
-    y = df['Hogwarts House']
-    y = y.astype('int')
-
-    # ------------- WORKS FFS !
-    print(y)
     logreg = LogisticRegression(solver='lbfgs')
-    logreg.fit(X, y)
+    logreg.fit(x_train, y_train)
+    print(f'θ0 = {logreg.intercept_[0]} {[f"θ{e + 1} = {coeff}" for e, coeff in enumerate(list(logreg.coef_[0]))]}\n\n')
+    print(f'θ0 = {logreg.intercept_[1]} {[f"θ{e + 1} = {coeff}" for e, coeff in enumerate(list(logreg.coef_[1]))]}\n\n')
+    print(f'θ0 = {logreg.intercept_[2]} {[f"θ{e + 1} = {coeff}" for e, coeff in enumerate(list(logreg.coef_[2]))]}\n\n')
+    print(f'θ0 = {logreg.intercept_[3]} {[f"θ{e + 1} = {coeff}" for e, coeff in enumerate(list(logreg.coef_[3]))]}\n\n')
+    y_pred = []
+    x_test = x_test.reset_index(drop=True)
+    for i in range(len(x_test)):
+        list_y = []
+        list_y.append(1 / (1 + math.exp(-(logreg.intercept_[0] + (x_test.loc[i, 'Astronomy'] * logreg.coef_[0][0])
+                      + (x_test.loc[i, 'Herbology'] * logreg.coef_[0][1])
+                      + (x_test.loc[i, 'Defense Against the Dark Arts'] * logreg.coef_[0][2])
+                      + (x_test.loc[i, 'Ancient Runes'] * logreg.coef_[0][3])))))
+        list_y.append(1 / (1 + math.exp(-(logreg.intercept_[1] + (x_test.loc[i, 'Astronomy'] * logreg.coef_[1][0])
+                      + (x_test.loc[i, 'Herbology'] * logreg.coef_[1][1])
+                      + (x_test.loc[i, 'Defense Against the Dark Arts'] * logreg.coef_[1][2])
+                      + (x_test.loc[i, 'Ancient Runes'] * logreg.coef_[1][3])))))
+        list_y.append(1 / (1 + math.exp(-(logreg.intercept_[2] + (x_test.loc[i, 'Astronomy'] * logreg.coef_[2][0])
+                      + (x_test.loc[i, 'Herbology'] * logreg.coef_[2][1])
+                      + (x_test.loc[i, 'Defense Against the Dark Arts'] * logreg.coef_[2][2])
+                      + (x_test.loc[i, 'Ancient Runes'] * logreg.coef_[2][3])))))
+        list_y.append(1 / (1 + math.exp(-(logreg.intercept_[3] + (x_test.loc[i, 'Astronomy'] * logreg.coef_[3][0])
+                      + (x_test.loc[i, 'Herbology'] * logreg.coef_[3][1])
+                      + (x_test.loc[i, 'Defense Against the Dark Arts'] * logreg.coef_[3][2])
+                      + (x_test.loc[i, 'Ancient Runes'] * logreg.coef_[3][3])))))
+        val_y = 0
+        key_y = 0
+        for e, v in enumerate(list_y):
+            if v > val_y:
+                val_y = v
+                key_y = e + 1
 
-    print(f'X ======\n {X}')
-
-    df_test = pd.read_csv(os.path.join(os.getcwd(), 'dataset_test.csv'))
-    df_test = df_test[['Divination', 'Transfiguration', 'Muggle Studies', 'Charms']]
-    df_test = df_test.dropna().reset_index(drop=True)
-    X_test = df_test
-    print(X_test)
-
-    y_pred = logreg.predict(X)
+        y_pred.append(key_y)
+        # for key in range(1, 4, 1):
+    y_pred = np.array(y_pred)
     print(y_pred)
+    print(logreg.predict(x_test))
+    # print(f'list(logreg.coef_[0]) = {list(logreg.coef_[0])}')
+
     from sklearn import metrics
-    cnf_matrix = metrics.confusion_matrix(y, y_pred)
-    print(cnf_matrix)
-    # END ------------- WORKS FFS !
-
-    # from sklearn.model_selection import train_test_split
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
-    #
-    # # instantiate the model (using the default parameters)
-    # logreg = LogisticRegression(solver='lbfgs')
-    #
-    # # fit the model with data
-    # logreg.fit(X_train, y_train)
-    #
-    # #
-    # y_pred = logreg.predict(X_test)
-
+    cnf_matrix = metrics.confusion_matrix(y_test, y_pred)
     class_names = [0, 1]  # name  of classes
     fig, ax = plt.subplots()
     tick_marks = np.arange(len(class_names))
     plt.xticks(tick_marks, class_names)
     plt.yticks(tick_marks, class_names)
+
     # create heatmap
     sns.heatmap(pd.DataFrame(cnf_matrix), annot=True, cmap="YlGnBu", fmt='g')
     bottom, top = ax.get_ylim()
@@ -78,25 +89,16 @@ def train(df):
     plt.xlabel('Predicted label')
     plt.show()
 
-    print("Accuracy:", metrics.accuracy_score(y, y_pred))
-    print("Precision:", metrics.precision_score(y, y_pred))
-    print("Recall:", metrics.recall_score(y, y_pred))
-
-
-
-
-
-    # df2 = pd.get_dummies(df, columns=['Divination', 'Transfiguration', 'Muggle Studies', 'Charms'])
-    # print(list(df2.columns))
-    # print(df2)
-    # sns.countplot(x='Hogwarts House', data=df, palette='hls')
-    # sns.countplot(y="Best Hand", data=df)
-    # plt.show()
-
-    # print(data.shape)
-    # print(list(data.columns))
-    # sns.countplot(x='y', data=data, palette='hls')
-    # plt.show()
+    print(np.where(y_test != 1, 0, y_test))
+    print(np.where(y_pred != 1, 0, y_pred))
+    print(f'Accuracy {house_list[0]}:'
+          f'{metrics.accuracy_score(np.where(y_test != 1, 0, y_test), np.where(y_pred != 1, 0, y_pred)) * 100:.2f}%')
+    print(f'Accuracy {house_list[1]}:'
+          f'{metrics.accuracy_score(np.where(y_test != 2, 0, y_test), np.where(y_pred != 2, 0, y_pred)) * 100:.2f}%')
+    print(f'Accuracy {house_list[2]}:'
+          f'{metrics.accuracy_score(np.where(y_test != 3, 0, y_test), np.where(y_pred != 3, 0, y_pred)) * 100:.2f}%')
+    print(f'Accuracy {house_list[3]}:'
+          f'{metrics.accuracy_score(np.where(y_test != 4, 0, y_test), np.where(y_pred != 4, 0, y_pred)) * 100:.2f}%')
 
 
 def parsing():
