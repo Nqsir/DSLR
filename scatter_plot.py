@@ -40,7 +40,7 @@ def pearson_s_correlation_coefficient(df):
 
 def scatter_plot(df):
     """
-    Calculates Pearson's correlation coefficients of the DataFrame passed as an argument
+    Create a scatter_plot graphic with the DataFrame passed as an argument
     :param df: A DataFrame
     :return: A new DataFrame containing Pearson's correlation coefficient
     """
