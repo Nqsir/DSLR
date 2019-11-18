@@ -40,6 +40,25 @@ def pearson_s_correlation_coefficient(df):
 
 def scatter_plot(df):
     """
+    Create a scatter_plot graphic with the DataFrame passed as an argument
+    :param df: A DataFrame
+    :return: A new DataFrame containing Pearson's correlation coefficient
+    """
+
+    plt.style.use('ggplot')
+    col = df.columns
+    colors = ['black', 'gray', 'brown', 'red', 'peru', 'yellow', 'chartreuse', 'darkgreen', 'turquoise', 'teal',
+              'navy', 'magenta', 'pink']
+
+    for e, c in enumerate(col[5:]):
+        plt.scatter(df.index, df.loc[:, c], label=c, c=f'{colors[e%13]}')
+
+    plt.legend()
+    plt.tight_layout(True)
+
+
+def heat_map(df):
+    """
     Calculates Pearson's correlation coefficients of the DataFrame passed as an argument
     and plot a heat map of correlation coefficient
     :param df: A DataFrame
@@ -93,12 +112,13 @@ if __name__ == '__main__':
         except KeyError:
             pass
 
-        df_corr_coef = scatter_plot(df)
+        scatter_plot(df)
 
         if args.save:
             plt.savefig(os.path.join(os.getcwd(), 'scatter_plot.png'))
 
         if args.compare:
+            df_corr_coef = heat_map(df)
             print(f'\x1b[1;30;43mPandas corr():\x1b[0m \n\n{df.corr()}\n\n')
             print(f'\x1b[1;30;42mDSLR Pearson\'s correlation coefficient:\x1b[0m \n\n{df_corr_coef}\n\n')
 
