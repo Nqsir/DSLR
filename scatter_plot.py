@@ -38,20 +38,29 @@ def pearson_s_correlation_coefficient(df):
                         columns=[k for k in list(res.keys())])
 
 
-def scatter_plot(df):
+def scatter_plot(df, df_corr):
     """
     Create a scatter_plot graphic with the DataFrame passed as an argument
     :param df: A DataFrame
+    :param df_corr: A DataFrame containing Pearson's correlation coefficient
     :return: A new DataFrame containing Pearson's correlation coefficient
     """
 
     plt.style.use('ggplot')
-    col = df.columns
-    colors = ['black', 'gray', 'brown', 'red', 'peru', 'yellow', 'chartreuse', 'darkgreen', 'turquoise', 'teal',
-              'navy', 'magenta', 'pink']
+    list_col = [0]
+    list_name = ['', '']
+    columns = list(df_corr.columns)
+    index = list(df_corr.index)
+    for col in columns:
+        for ind in index:
+            if col is not ind:
+                if abs(df_corr.loc[ind, col]) > abs(list_col[0]):
+                    list_col[0] = df_corr.loc[ind, col]
+                    list_name = [col, ind]
 
-    for e, c in enumerate(col[5:]):
-        plt.scatter(df.index, df.loc[:, c], label=c, c=f'{colors[e%13]}')
+    plt.scatter(df.loc[:, list_name[0]], df.loc[:, list_name[0]], label=list_name[0], c='black', s=30)
+    plt.scatter(df.loc[:, list_name[1]].apply(lambda x: x * 100), df.loc[:, list_name[1]].apply(lambda x: x * 100),
+                label=list_name[1], c='yellow', s=10)
 
     plt.legend()
     plt.tight_layout(True)
@@ -64,8 +73,6 @@ def heat_map(df):
     :param df: A DataFrame
     :return: A new DataFrame containing Pearson's correlation coefficient
     """
-
-    df_corr = pearson_s_correlation_coefficient(df)
 
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=[7, 6])
     cax = ax.matshow(abs(df_corr), cmap='Reds')
@@ -112,15 +119,17 @@ if __name__ == '__main__':
         except KeyError:
             pass
 
-        scatter_plot(df)
+        df_corr = pearson_s_correlation_coefficient(df)
+
+        if args.compare:
+            df_corr_coef = heat_map(df_corr)
+            print(f'\x1b[1;30;43mPandas corr():\x1b[0m \n\n{df.corr()}\n\n')
+            print(f'\x1b[1;30;42mDSLR Pearson\'s correlation coefficient:\x1b[0m \n\n{df_corr}\n\n')
+        else:
+            scatter_plot(df, df_corr)
 
         if args.save:
             plt.savefig(os.path.join(os.getcwd(), 'scatter_plot.png'))
-
-        if args.compare:
-            df_corr_coef = heat_map(df)
-            print(f'\x1b[1;30;43mPandas corr():\x1b[0m \n\n{df.corr()}\n\n')
-            print(f'\x1b[1;30;42mDSLR Pearson\'s correlation coefficient:\x1b[0m \n\n{df_corr_coef}\n\n')
 
         plt.show()
     else:
