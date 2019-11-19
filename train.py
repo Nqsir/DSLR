@@ -61,7 +61,7 @@ def cost_gradient(theta, X, y):
 def gradient_descent(X, y, alpha, num_features):
     theta = np.zeros(num_features + 1)
     i = 0
-    while (cost(theta, X, y) > 0.15 or i < 3500) and i < 5000:
+    while (cost(theta, X, y) > 0.15 or i < 35000) and i < 50000:
         theta = theta - (alpha * cost_gradient(theta, X, y))
         i += 1
     print(f'Number of iteration: {i}')
@@ -76,7 +76,6 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
         classifiers[(c - 1), :] = gradient_descent(x_train, label, 0.000035, num_features)
 
     # Save metrics
-    # CHANGED NUM FOR TESTS PUT BACK 35 000 & 50 000
     print(classifiers)
     os.makedirs('thetas', exist_ok=True)
     dict_thetas = {}
