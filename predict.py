@@ -63,7 +63,7 @@ if __name__ == '__main__':
         try:
             thetas, list_features = get_thetas(coefs_file)
         except ValueError:
-            sys.exit(f'\n\x1b[1;37;41m Wrong thetas \x1b[0m\n')
+            sys.exit(f'\n\x1b[1;37;41m Wrong values \x1b[0m\n')
     else:
         sys.exit(print(f'\x1b[1;37;41mThe selected file must be a xlsx file \x1b[0m\n'))
 
@@ -75,15 +75,16 @@ if __name__ == '__main__':
 
         if args.compare:
             sk_file = os.path.join(os.getcwd(), 'thetas\sk_coefs.xlsx')
-            sk_thetas, _ = get_thetas(sk_file)
-            sk_prediction, _ = predict(df, col, sk_thetas)
-            print(f'\n\x1b[1;30;43mSklearn prediction :\x1b[0m\n{sk_prediction}\n')
-            print(f'\n\x1b[1;30;42mComparative global accuracy: '
-                  f'{acc_score(prediction, sk_prediction) * 100:.2f}% \x1b[0m\n')
-
-        # if in_put < 0:
-        #     sys.exit(f'\n\x1b[1;37;41m Wrong mileage \x1b[0m\n')
-        # else:
-        #     sys.exit(f'\n\x1b[1;30;42m The estimated price is: {theta0 + theta1 * in_put:.2f} \x1b[0m\n')
+            if os.path.exists(sk_file) and os.path.isfile(sk_file) and sk_file.endswith('.xlsx'):
+                try:
+                    sk_thetas, _ = get_thetas(sk_file)
+                    sk_prediction, _ = predict(df, col, sk_thetas)
+                    print(f'\n\x1b[1;30;43mSklearn prediction :\x1b[0m\n{sk_prediction}\n')
+                    print(f'\n\x1b[1;30;42mComparative global accuracy: '
+                          f'{acc_score(prediction, sk_prediction) * 100:.2f}% \x1b[0m\n')
+                except ValueError:
+                    sys.exit(f'\n\x1b[1;37;41m Wrong values \x1b[0m\n')
+            else:
+                sys.exit(print(f'\x1b[1;37;41mNo sk_coefs.xlsx found \x1b[0m\n'))
     else:
         sys.exit(print(f'\x1b[1;37;41mThe selected file must be a csv file \x1b[0m\n'))
