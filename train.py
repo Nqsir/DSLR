@@ -8,6 +8,39 @@ import seaborn as sns
 import sys
 
 
+def compare_with_sk(x_train, x_test, y_train, y_test, y_pred, house_list, num_labels, num_features):
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import accuracy_score as sk_a_s
+    logreg = LogisticRegression(solver='lbfgs', multi_class='multinomial', max_iter=15000)
+    logreg.fit(x_train[:, 1:], y_train)
+    y_sk = logreg.predict(x_test[:, 1:])
+    print(f'\nPrediction sklearn = \n{y_sk}\n')
+    for i in range(4):
+        print(f'Sklearn Accuracy {house_list[i]}:'
+              f'{sk_a_s(np.where(y_test != i + 1, 0, y_test), np.where(y_sk != i + 1, 0, y_sk)) * 100:.2f}%')
+
+    print(f'\n\x1b[1;30;43mSklearn Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
+    print(f'\n\x1b[1;30;42mDSLR Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
+
+    # Save metrics
+    os.makedirs('thetas', exist_ok=True)
+    dict_thetas = dict()
+    for i in range(num_labels):
+        list_thetas = [logreg.intercept_[i], ]
+        for c in range(num_features):
+            list_thetas.append(float(logreg.coef_[i][c]))
+
+        dict_thetas[f'label_{i}'] = list_thetas
+
+    print(dict_thetas)
+
+    df_coefs = pd.DataFrame([dict_thetas[key] for key in dict_thetas.keys()],
+                            index=[f'label_{n}' for n in range(num_labels)],
+                            columns=[f'theta_{n}' for n in range(num_features + 1)])
+
+    df_coefs.to_excel(os.path.join('thetas', f'sk_coefs.xlsx'))
+
+
 def acc_score(true, pred):
     c = 0
     length = len(true)
@@ -68,7 +101,7 @@ def gradient_descent(X, y, alpha, num_features):
     return theta
 
 
-def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
+def prediction(x_train, y_train, x_test, num_labels, num_features, house_list, list_x):
     classifiers = np.zeros(shape=(num_labels, num_features + 1))
     for c in range(1, num_labels + 1):
         print(f'Entering gradient descent for: {house_list[c - 1]}')
@@ -76,7 +109,6 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
         classifiers[(c - 1), :] = gradient_descent(x_train, label, 0.000035, num_features)
 
     # Save metrics
-    print(classifiers)
     os.makedirs('thetas', exist_ok=True)
     dict_thetas = dict()
     for f in range(num_labels):
@@ -90,7 +122,7 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
 
     df_coefs = pd.DataFrame([dict_thetas[key] for key in dict_thetas.keys()],
                             index=[f'label_{n}' for n in range(num_labels)],
-                            columns=[house_list[n - 1] if n != 0 else 'theta0' for n in range(num_features + 1)])
+                            columns=[list_x[n - 1] if n != 0 else 'theta0' for n in range(num_features + 1)])
 
     df_coefs.to_excel(os.path.join('thetas', f'coefs.xlsx'))
 
@@ -99,11 +131,11 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
     return probabilities.argmax(axis=1) + 1
 
 
-def formatting_data(df, house_list, list_x_test):
-    df = df[list_x_test[:]]
+def formatting_data(df, house_list, list_col):
+    df = df[list_col[:]]
     df = df.dropna().reset_index(drop=True)
 
-    x = df[list_x_test[1:]]
+    x = df[list_col[1:]]
     x = x.to_numpy()
     y = pd.DataFrame(df['Hogwarts House'])
     for i in range(4):
@@ -139,11 +171,11 @@ def formatting_data(df, house_list, list_x_test):
 
 def train(df):
     house_list = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff']
-    list_x_test = ['Hogwarts House', 'Astronomy', 'Herbology', 'Defense Against the Dark Arts', 'Ancient Runes']
+    list_col = ['Hogwarts House', 'Astronomy', 'Herbology', 'Defense Against the Dark Arts', 'Ancient Runes']
 
-    x_train, x_test, y_train, y_test, num_features, num_labels = formatting_data(df, house_list, list_x_test)
+    x_train, x_test, y_train, y_test, num_features, num_labels = formatting_data(df, house_list, list_col)
 
-    y_pred = prediction(x_train, y_train, x_test, num_labels, num_features, house_list)
+    y_pred = prediction(x_train, y_train, x_test, num_labels, num_features, house_list, list_col[1:])
 
     if args.evaluate or args.compare:
         print(f'\ny_test =\n{y_test}\n')
@@ -155,18 +187,7 @@ def train(df):
                   f'{acc_score(np.where(y_test != i + 1, 0, y_test), np.where(y_pred != i + 1, 0, y_pred)) * 100:.2f}%')
 
         if args.compare:
-            from sklearn.linear_model import LogisticRegression
-            from sklearn.metrics import accuracy_score as sk_a_s
-            logreg = LogisticRegression(solver='lbfgs', multi_class='multinomial', max_iter=15000)
-            logreg.fit(x_train, y_train)
-            y_sk = logreg.predict(x_test)
-            print(f'\nPrediction sklearn = \n{y_sk}\n')
-            for i in range(4):
-                print(f'Sklearn Accuracy {house_list[i]}:'
-                      f'{sk_a_s(np.where(y_test != i + 1, 0, y_test), np.where(y_sk != i + 1, 0, y_sk)) * 100:.2f}%')
-
-            print(f'\n\x1b[1;30;43mSklearn Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
-            print(f'\n\x1b[1;30;42mDSLR Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
+            compare_with_sk(x_train, x_test, y_train, y_test, y_pred, house_list, num_labels, num_features)
 
 
 def parsing():
