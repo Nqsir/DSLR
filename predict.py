@@ -70,6 +70,9 @@ if __name__ == '__main__':
     if os.path.exists(csv_file) and os.path.isfile(csv_file) and csv_file.endswith('.csv'):
         df, col = formatting_data(csv_file, list_features)
         prediction, x_test = predict(df, col, thetas)
+        # Need to define the proper header names + redefine the houses
+        # save_df = pd.DataFrame(prediction)
+        # save_df.to_csv('houses.csv', header=['Hogwarts House'])
 
         print(f'\x1b[1;30;42mDSLR prediction :\x1b[0m\n{prediction}\n')
 
