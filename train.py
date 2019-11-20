@@ -8,11 +8,11 @@ import seaborn as sns
 import sys
 
 
-def acc_score(list_1, list_2):
+def acc_score(true, pred):
     c = 0
-    length = len(list_1)
+    length = len(true)
     for i in range(length):
-        if list_1[i] != list_2[i]:
+        if true[i] != pred[i]:
             c += 1
     return 1 - (c / length)
 
@@ -78,7 +78,7 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
     # Save metrics
     print(classifiers)
     os.makedirs('thetas', exist_ok=True)
-    dict_thetas = {}
+    dict_thetas = dict()
     for f in range(num_labels):
         list_thetas = []
         for e, c in enumerate(np.nditer(classifiers[f])):
@@ -86,10 +86,12 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
 
         dict_thetas[f'label_{f}'] = list_thetas
 
+    print(dict_thetas)
+
     df_coefs = pd.DataFrame([dict_thetas[key] for key in dict_thetas.keys()],
                             index=[f'label_{n}' for n in range(num_labels)],
-                            columns=[f'theta_{n}' for n in range(num_features + 1)])
-    print(df_coefs)
+                            columns=[house_list[n - 1] if n != 0 else 'theta0' for n in range(num_features + 1)])
+
     df_coefs.to_excel(os.path.join('thetas', f'coefs.xlsx'))
 
     probabilities = sigmoid(x_test @ classifiers.transpose())
@@ -109,14 +111,17 @@ def formatting_data(df, house_list, list_x_test):
     y = y.astype('int')
     y = y.to_numpy()
 
-    if args.evaluate or args.compare:
+    if args.compare or not args.evaluate:
+        if args.compare:
+            print(f'\nTraining and comparing model on 100% of the datasert\n')
+        x_train, x_test = x, x
+        y_train, y_test = y, y
+    else:
         print(f'\nTraining model on 80% of the datasert')
         print(f'Evaluating model on 20% of the dataset\n')
         from sklearn.model_selection import train_test_split
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
-    else:
-        x_train, x_test = x, x
-        y_train, y_test = y, y
+
     y_train = np.resize(y_train, x_train.shape[0])
     y_test = np.resize(y_test, y_test.shape[0])
 
@@ -141,24 +146,27 @@ def train(df):
     y_pred = prediction(x_train, y_train, x_test, num_labels, num_features, house_list)
 
     if args.evaluate or args.compare:
-        print(f'y_test =\n{y_test}\n')
-        print(f'y_pred =\n{y_pred}\n')
+        print(f'\ny_test =\n{y_test}\n')
+        print(f'\ny_pred =\n{y_pred}\n')
         plot_heat_map(y_test, y_pred)
 
         for i in range(4):
-            print(f'Accuracy of {house_list[i]}:'
+            print(f'DSLR Accuracy of {house_list[i]}:'
                   f'{acc_score(np.where(y_test != i + 1, 0, y_test), np.where(y_pred != i + 1, 0, y_pred)) * 100:.2f}%')
 
         if args.compare:
             from sklearn.linear_model import LogisticRegression
             from sklearn.metrics import accuracy_score as sk_a_s
-            logreg = LogisticRegression(solver='lbfgs', multi_class='multinomial')
+            logreg = LogisticRegression(solver='lbfgs', multi_class='multinomial', max_iter=15000)
             logreg.fit(x_train, y_train)
             y_sk = logreg.predict(x_test)
-            print(f'Prediction sklearn = \n{y_sk}\n')
+            print(f'\nPrediction sklearn = \n{y_sk}\n')
             for i in range(4):
-                print(f'Accuracy {house_list[i]}:'
+                print(f'Sklearn Accuracy {house_list[i]}:'
                       f'{sk_a_s(np.where(y_test != i + 1, 0, y_test), np.where(y_sk != i + 1, 0, y_sk)) * 100:.2f}%')
+
+            print(f'\n\x1b[1;30;43mSklearn Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
+            print(f'\n\x1b[1;30;42mDSLR Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
 
 
 def parsing():
@@ -167,7 +175,7 @@ def parsing():
     :return: _args
     """
 
-    parser = argparse.ArgumentParser(prog='py pair_plot.py')
+    parser = argparse.ArgumentParser(prog='py train.py')
     parser.add_argument('csv_file', help='A csv file containing data')
     parser.add_argument('-c', '--compare', action='store_true', help='Comparative mode', default=False)
     parser.add_argument('-e', '--evaluate', action='store_true', help='Evaluate the model', default=False)
