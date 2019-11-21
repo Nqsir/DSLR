@@ -8,11 +8,46 @@ import seaborn as sns
 import sys
 
 
-def acc_score(list_1, list_2):
+def printing_results(y_test, y_pred, y_sk, house_list):
+    from sklearn.metrics import accuracy_score as sk_a_s
+    print(f'\nPrediction sklearn = \n{y_sk}\n')
+    for i in range(4):
+        print(f'Sklearn Accuracy {house_list[i]}:'
+              f'{sk_a_s(np.where(y_test != i + 1, 0, y_test), np.where(y_sk != i + 1, 0, y_sk)) * 100:.2f}%')
+
+    print(f'\n\x1b[1;30;43mSklearn Global accuracy: {sk_a_s(y_test, y_sk) * 100:.2f}% \x1b[0m\n')
+    print(f'\n\x1b[1;30;42mDSLR Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
+
+
+def compare_with_sk(x_train, x_test, y_train, y_test, y_pred, house_list, num_labels, num_features):
+    from sklearn.linear_model import LogisticRegression
+    logreg = LogisticRegression(solver='lbfgs', multi_class='multinomial', max_iter=15000)
+    logreg.fit(x_train[:, 1:], y_train)
+    y_sk = logreg.predict(x_test[:, 1:])
+    printing_results(y_test, y_pred, y_sk, house_list)
+
+    # Save metrics
+    os.makedirs('thetas', exist_ok=True)
+    dict_thetas = dict()
+    for i in range(num_labels):
+        list_thetas = [logreg.intercept_[i], ]
+        for c in range(num_features):
+            list_thetas.append(float(logreg.coef_[i][c]))
+
+        dict_thetas[f'label_{i}'] = list_thetas
+
+    df_coefs = pd.DataFrame([dict_thetas[key] for key in dict_thetas.keys()],
+                            index=[f'label_{n}' for n in range(num_labels)],
+                            columns=[f'theta_{n}' for n in range(num_features + 1)])
+
+    df_coefs.to_excel(os.path.join('thetas', f'sk_coefs.xlsx'))
+
+
+def acc_score(true, pred):
     c = 0
-    length = len(list_1)
+    length = len(true)
     for i in range(length):
-        if list_1[i] != list_2[i]:
+        if true[i] != pred[i]:
             c += 1
     return 1 - (c / length)
 
@@ -61,14 +96,15 @@ def cost_gradient(theta, X, y):
 def gradient_descent(X, y, alpha, num_features):
     theta = np.zeros(num_features + 1)
     i = 0
-    while (cost(theta, X, y) > 0.15 or i < 3500) and i < 5000:
+    while (cost(theta, X, y) > 0.15 or i < 35000) and i < 50000:
         theta = theta - (alpha * cost_gradient(theta, X, y))
         i += 1
+
     print(f'Number of iteration: {i}')
     return theta
 
 
-def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
+def prediction(x_train, y_train, x_test, num_labels, num_features, house_list, list_x):
     classifiers = np.zeros(shape=(num_labels, num_features + 1))
     for c in range(1, num_labels + 1):
         print(f'Entering gradient descent for: {house_list[c - 1]}')
@@ -76,10 +112,8 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
         classifiers[(c - 1), :] = gradient_descent(x_train, label, 0.000035, num_features)
 
     # Save metrics
-    # CHANGED NUM FOR TESTS PUT BACK 35 000 & 50 000
-    print(classifiers)
     os.makedirs('thetas', exist_ok=True)
-    dict_thetas = {}
+    dict_thetas = dict()
     for f in range(num_labels):
         list_thetas = []
         for e, c in enumerate(np.nditer(classifiers[f])):
@@ -89,8 +123,8 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
 
     df_coefs = pd.DataFrame([dict_thetas[key] for key in dict_thetas.keys()],
                             index=[f'label_{n}' for n in range(num_labels)],
-                            columns=[f'theta_{n}' for n in range(num_features + 1)])
-    print(df_coefs)
+                            columns=[list_x[n - 1] if n != 0 else 'theta0' for n in range(num_features + 1)])
+
     df_coefs.to_excel(os.path.join('thetas', f'coefs.xlsx'))
 
     probabilities = sigmoid(x_test @ classifiers.transpose())
@@ -98,68 +132,72 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list):
     return probabilities.argmax(axis=1) + 1
 
 
-def formatting_data(df, house_list, list_x_test):
-    df = df[list_x_test[:]]
-    df = df.dropna().reset_index(drop=True)
+def insert_ones(x):
+        X = np.ones(shape=(x.shape[0], x.shape[1] + 1))
+        X[:, 1:] = x
+        return X
 
-    x = df[list_x_test[1:]]
-    x = x.to_numpy()
-    y = pd.DataFrame(df['Hogwarts House'])
-    for i in range(4):
-        y['Hogwarts House'] = np.where(y['Hogwarts House'] == house_list[i], i + 1, y['Hogwarts House'])
-    y = y.astype('int')
-    y = y.to_numpy()
 
-    if args.evaluate or args.compare:
+def formatting_train_test(x, y):
+    if args.compare or not args.evaluate:
+        if args.compare:
+            print(f'\nTraining and comparing model on 100% of the datasert\n')
+        x_train, x_test = x, x
+        y_train, y_test = y, y
+    else:
         print(f'\nTraining model on 80% of the datasert')
         print(f'Evaluating model on 20% of the dataset\n')
         from sklearn.model_selection import train_test_split
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
-    else:
-        x_train, x_test = x, x
-        y_train, y_test = y, y
-    y_train = np.resize(y_train, x_train.shape[0])
+
+    y_train = np.resize(y_train, y_train.shape[0])
     y_test = np.resize(y_test, y_test.shape[0])
 
-    num_features = x_train.shape[1]
+    x_train = insert_ones(x_train)
+    x_test = insert_ones(x_test)
+
+    return x_train, x_test, y_train, y_test
+
+
+def formatting_data(df, house_list, list_col):
+    df = df[list_col[:]]
+    df = df.dropna().reset_index(drop=True)
+
+    x = df[list_col[1:]]
+    x = x.to_numpy()
+    y = pd.DataFrame(df['Hogwarts House'])
+    for i in range(len(house_list)):
+        y['Hogwarts House'] = np.where(y['Hogwarts House'] == house_list[i], i + 1, y['Hogwarts House'])
+    y = y.astype('int')
+    y = y.to_numpy()
+
+    x_train, x_test, y_train, y_test = formatting_train_test(x, y)
+
+    num_features = x.shape[1]
     num_labels = 4
 
-    X_train = np.ones(shape=(x_train.shape[0], x_train.shape[1] + 1))
-    X_train[:, 1:] = x_train
-
-    X_test = np.ones(shape=(x_test.shape[0], x_test.shape[1] + 1))
-    X_test[:, 1:] = x_test
-
-    return X_train, X_test, y_train, y_test, num_features, num_labels
+    return x_train, x_test, y_train, y_test, num_features, num_labels
 
 
 def train(df):
     house_list = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff']
-    list_x_test = ['Hogwarts House', 'Astronomy', 'Herbology', 'Defense Against the Dark Arts', 'Ancient Runes']
+    list_col = ['Hogwarts House', 'Astronomy', 'Herbology', 'Defense Against the Dark Arts', 'Ancient Runes']
 
-    x_train, x_test, y_train, y_test, num_features, num_labels = formatting_data(df, house_list, list_x_test)
+    x_train, x_test, y_train, y_test, num_features, num_labels = formatting_data(df, house_list, list_col)
 
-    y_pred = prediction(x_train, y_train, x_test, num_labels, num_features, house_list)
+    y_pred = prediction(x_train, y_train, x_test, num_labels, num_features, house_list, list_col[1:])
 
     if args.evaluate or args.compare:
-        print(f'y_test =\n{y_test}\n')
-        print(f'y_pred =\n{y_pred}\n')
+        print(f'\ny_test =\n{y_test}\n')
+        print(f'\ny_pred =\n{y_pred}\n')
         plot_heat_map(y_test, y_pred)
 
         for i in range(4):
-            print(f'Accuracy of {house_list[i]}:'
+            print(f'DSLR Accuracy of {house_list[i]}:'
                   f'{acc_score(np.where(y_test != i + 1, 0, y_test), np.where(y_pred != i + 1, 0, y_pred)) * 100:.2f}%')
 
         if args.compare:
-            from sklearn.linear_model import LogisticRegression
-            from sklearn.metrics import accuracy_score as sk_a_s
-            logreg = LogisticRegression(solver='lbfgs', multi_class='multinomial')
-            logreg.fit(x_train, y_train)
-            y_sk = logreg.predict(x_test)
-            print(f'Prediction sklearn = \n{y_sk}\n')
-            for i in range(4):
-                print(f'Accuracy {house_list[i]}:'
-                      f'{sk_a_s(np.where(y_test != i + 1, 0, y_test), np.where(y_sk != i + 1, 0, y_sk)) * 100:.2f}%')
+            compare_with_sk(x_train, x_test, y_train, y_test, y_pred, house_list, num_labels, num_features)
 
 
 def parsing():
@@ -168,7 +206,7 @@ def parsing():
     :return: _args
     """
 
-    parser = argparse.ArgumentParser(prog='py pair_plot.py')
+    parser = argparse.ArgumentParser(prog='py train.py')
     parser.add_argument('csv_file', help='A csv file containing data')
     parser.add_argument('-c', '--compare', action='store_true', help='Comparative mode', default=False)
     parser.add_argument('-e', '--evaluate', action='store_true', help='Evaluate the model', default=False)
