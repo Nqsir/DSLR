@@ -8,19 +8,23 @@ import seaborn as sns
 import sys
 
 
-def compare_with_sk(x_train, x_test, y_train, y_test, y_pred, house_list, num_labels, num_features):
-    from sklearn.linear_model import LogisticRegression
+def printing_results(y_test, y_pred, y_sk, house_list):
     from sklearn.metrics import accuracy_score as sk_a_s
-    logreg = LogisticRegression(solver='lbfgs', multi_class='multinomial', max_iter=15000)
-    logreg.fit(x_train[:, 1:], y_train)
-    y_sk = logreg.predict(x_test[:, 1:])
     print(f'\nPrediction sklearn = \n{y_sk}\n')
     for i in range(4):
         print(f'Sklearn Accuracy {house_list[i]}:'
               f'{sk_a_s(np.where(y_test != i + 1, 0, y_test), np.where(y_sk != i + 1, 0, y_sk)) * 100:.2f}%')
 
-    print(f'\n\x1b[1;30;43mSklearn Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
+    print(f'\n\x1b[1;30;43mSklearn Global accuracy: {sk_a_s(y_test, y_sk) * 100:.2f}% \x1b[0m\n')
     print(f'\n\x1b[1;30;42mDSLR Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
+
+
+def compare_with_sk(x_train, x_test, y_train, y_test, y_pred, house_list, num_labels, num_features):
+    from sklearn.linear_model import LogisticRegression
+    logreg = LogisticRegression(solver='lbfgs', multi_class='multinomial', max_iter=15000)
+    logreg.fit(x_train[:, 1:], y_train)
+    y_sk = logreg.predict(x_test[:, 1:])
+    printing_results(y_test, y_pred, y_sk, house_list)
 
     # Save metrics
     os.makedirs('thetas', exist_ok=True)
@@ -31,8 +35,6 @@ def compare_with_sk(x_train, x_test, y_train, y_test, y_pred, house_list, num_la
             list_thetas.append(float(logreg.coef_[i][c]))
 
         dict_thetas[f'label_{i}'] = list_thetas
-
-    print(dict_thetas)
 
     df_coefs = pd.DataFrame([dict_thetas[key] for key in dict_thetas.keys()],
                             index=[f'label_{n}' for n in range(num_labels)],
@@ -97,6 +99,7 @@ def gradient_descent(X, y, alpha, num_features):
     while (cost(theta, X, y) > 0.15 or i < 35000) and i < 50000:
         theta = theta - (alpha * cost_gradient(theta, X, y))
         i += 1
+
     print(f'Number of iteration: {i}')
     return theta
 
@@ -118,8 +121,6 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list, l
 
         dict_thetas[f'label_{f}'] = list_thetas
 
-    print(dict_thetas)
-
     df_coefs = pd.DataFrame([dict_thetas[key] for key in dict_thetas.keys()],
                             index=[f'label_{n}' for n in range(num_labels)],
                             columns=[list_x[n - 1] if n != 0 else 'theta0' for n in range(num_features + 1)])
@@ -131,18 +132,13 @@ def prediction(x_train, y_train, x_test, num_labels, num_features, house_list, l
     return probabilities.argmax(axis=1) + 1
 
 
-def formatting_data(df, house_list, list_col):
-    df = df[list_col[:]]
-    df = df.dropna().reset_index(drop=True)
+def insert_ones(x):
+        X = np.ones(shape=(x.shape[0], x.shape[1] + 1))
+        X[:, 1:] = x
+        return X
 
-    x = df[list_col[1:]]
-    x = x.to_numpy()
-    y = pd.DataFrame(df['Hogwarts House'])
-    for i in range(4):
-        y['Hogwarts House'] = np.where(y['Hogwarts House'] == house_list[i], i + 1, y['Hogwarts House'])
-    y = y.astype('int')
-    y = y.to_numpy()
 
+def formatting_train_test(x, y):
     if args.compare or not args.evaluate:
         if args.compare:
             print(f'\nTraining and comparing model on 100% of the datasert\n')
@@ -154,19 +150,33 @@ def formatting_data(df, house_list, list_col):
         from sklearn.model_selection import train_test_split
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
 
-    y_train = np.resize(y_train, x_train.shape[0])
+    y_train = np.resize(y_train, y_train.shape[0])
     y_test = np.resize(y_test, y_test.shape[0])
 
-    num_features = x_train.shape[1]
+    x_train = insert_ones(x_train)
+    x_test = insert_ones(x_test)
+
+    return x_train, x_test, y_train, y_test
+
+
+def formatting_data(df, house_list, list_col):
+    df = df[list_col[:]]
+    df = df.dropna().reset_index(drop=True)
+
+    x = df[list_col[1:]]
+    x = x.to_numpy()
+    y = pd.DataFrame(df['Hogwarts House'])
+    for i in range(len(house_list)):
+        y['Hogwarts House'] = np.where(y['Hogwarts House'] == house_list[i], i + 1, y['Hogwarts House'])
+    y = y.astype('int')
+    y = y.to_numpy()
+
+    x_train, x_test, y_train, y_test = formatting_train_test(x, y)
+
+    num_features = x.shape[1]
     num_labels = 4
 
-    X_train = np.ones(shape=(x_train.shape[0], x_train.shape[1] + 1))
-    X_train[:, 1:] = x_train
-
-    X_test = np.ones(shape=(x_test.shape[0], x_test.shape[1] + 1))
-    X_test[:, 1:] = x_test
-
-    return X_train, X_test, y_train, y_test, num_features, num_labels
+    return x_train, x_test, y_train, y_test, num_features, num_labels
 
 
 def train(df):
