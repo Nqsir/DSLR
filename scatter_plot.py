@@ -66,7 +66,7 @@ def scatter_plot(df, df_corr):
     plt.tight_layout(True)
 
 
-def heat_map(df):
+def heat_map(df_corr):
     """
     Calculates Pearson's correlation coefficients of the DataFrame passed as an argument
     and plot a heat map of correlation coefficient
