@@ -7,7 +7,7 @@ from train import sigmoid, acc_score
 
 
 def compare_with_sk(df, list_col, prediction):
-    sk_file = os.path.join(os.getcwd(), 'thetas\sk_coefs.xlsx')
+    sk_file = os.path.join(os.getcwd(), os.path.join('thetas', 'sk_coefs.xlsx'))
     if os.path.exists(sk_file) and os.path.isfile(sk_file) and sk_file.endswith('.xlsx'):
         try:
             sk_thetas = get_thetas(sk_file)
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     args = parsing()
 
     csv_file = os.path.join(os.getcwd(), args.csv_file)
-    coefs_file = os.path.join(os.getcwd(), 'thetas\coefs.xlsx')
+    coefs_file = os.path.join(os.getcwd(), os.path.join('thetas', 'coefs.xlsx'))
     house_list = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff']
     list_col = ['Hogwarts House', 'Astronomy', 'Herbology', 'Defense Against the Dark Arts', 'Ancient Runes']
     if os.path.exists(coefs_file) and os.path.isfile(coefs_file) and coefs_file.endswith('.xlsx'):
