@@ -12,7 +12,7 @@ For this project, you will have to create a one-vs-all classification using logi
 
 ### Usage
 
-- Reproduces the pandas describe()method
+- Reproduces the pandas .describe() method
 
 ```py describe.py dataset_train.csv```
 
