@@ -38,7 +38,7 @@ For this project, you will have to create a one-vs-all classification using logi
 ![pair](https://user-images.githubusercontent.com/40288838/70129635-69ce3200-167f-11ea-9007-af846294761b.png)
 
 
-- Trains the model, use ```-e``` to evaluate the model, i.e slices the dataset into 80% / 20% to split the trainning and testing part and verify the accuracy of the prediction, use 
+- Trains the model, use ```-e``` to evaluate the model, i.e slices the dataset into 80% / 20% to split the training and testing part and verify the accuracy of the prediction, use 
 ```-c``` to compare our model with the scikit-learn one using the accuracy score between the two predictions.
 
 ```py train.py dataset_train.csv -e``` or ```py train.py dataset_train.csv -c```
