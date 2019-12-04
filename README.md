@@ -48,7 +48,7 @@ For this project, you will have to create a one-vs-all classification using logi
 ![train](https://user-images.githubusercontent.com/40288838/70129642-6dfa4f80-167f-11ea-8c7b-f7ef4fca99eb.PNG)
 
 
-- Make the prediction, use ```-c``` to compare prediction with the sk_learn model (only if ```-c``` has been used in ```train.py```)
+- Make the prediction, use ```-c``` to compare prediction with the scikit-learn model (only if ```-c``` has been used in ```train.py```)
 
 ```py predict.py dataset_test.csv -c```
 
