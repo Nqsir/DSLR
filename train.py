@@ -16,7 +16,6 @@ def printing_results(y_test, y_pred, y_sk, house_list):
               f'{sk_a_s(np.where(y_test != i + 1, 0, y_test), np.where(y_sk != i + 1, 0, y_sk)) * 100:.2f}%')
 
     print(f'\n\x1b[1;30;43mSklearn Global accuracy: {sk_a_s(y_test, y_sk) * 100:.2f}% \x1b[0m\n')
-    print(f'\n\x1b[1;30;42mDSLR Global accuracy: {sk_a_s(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
 
 
 def compare_with_sk(x_train, x_test, y_train, y_test, y_pred, house_list, num_labels, num_features):
@@ -128,6 +127,7 @@ def gradient_descent(X, y, lr, num_features):
     :param num_features: Number of features
     :return: A list of thetas
     """
+
     theta = np.zeros(num_features + 1)
     i = 0
     while (cost(theta, X, y) > 0.15 or i < 35000) and i < 50000:
@@ -176,6 +176,7 @@ def insert_ones(x):
     :param x: a DataFrame
     :return: a numpy array
     """
+
     # This is the thetas array, so it must be sized: length * number of features + 1. (The + 1 stand for theta0)
     # Theta0 column is going to be multiplied by 1 in the cross product so it wont affect our hypothesis
     X = np.ones(shape=(x.shape[0], x.shape[1] + 1))
@@ -249,6 +250,7 @@ def train(df):
     Global function that take a DataFrame and train a logistic regression out of it
     :param df: A DataFrame
     """
+
     house_list = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff']
     list_col = ['Hogwarts House', 'Astronomy', 'Herbology', 'Defense Against the Dark Arts', 'Ancient Runes']
 
@@ -275,6 +277,8 @@ def train(df):
         for i in range(4):
             print(f'DSLR Accuracy of {house_list[i]}:'
                   f'{acc_score(np.where(y_test != i + 1, 0, y_test), np.where(y_pred != i + 1, 0, y_pred)) * 100:.2f}%')
+
+        print(f'\n\x1b[1;30;42mDSLR Global accuracy: {acc_score(y_test, y_pred) * 100:.2f}% \x1b[0m\n')
 
         # Makes a comparison of our model vs. Scikit-learn
         if args.compare:
@@ -303,6 +307,10 @@ if __name__ == '__main__':
     file = os.path.join(os.getcwd(), args.csv_file)
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
         df = pd.read_csv(file)
-        train(df)
+        df = df.dropna()
+        if not df.empty:
+            train(df)
+        else:
+            sys.exit(print(f'\x1b[1;37;41mEmpty DataFrame \x1b[0m\n'))
     else:
         sys.exit(print(f'\x1b[1;37;41mThe selected file must be a csv file \x1b[0m\n'))

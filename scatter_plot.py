@@ -114,23 +114,24 @@ if __name__ == '__main__':
     file = os.path.join(os.getcwd(), args.csv_file)
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
         df = pd.read_csv(file)
-        try:
+        df = df.dropna()
+        if not df.empty:
             df = df.drop(columns=['Index']).dropna().reset_index(drop=True)
-        except KeyError:
-            pass
 
-        df_corr = pearson_s_correlation_coefficient(df)
+            df_corr = pearson_s_correlation_coefficient(df)
 
-        if args.compare:
-            df_corr_coef = heat_map(df_corr)
-            print(f'\x1b[1;30;43mPandas corr():\x1b[0m \n\n{df.corr()}\n\n')
-            print(f'\x1b[1;30;42mDSLR Pearson\'s correlation coefficient:\x1b[0m \n\n{df_corr}\n\n')
+            if args.compare:
+                df_corr_coef = heat_map(df_corr)
+                print(f'\x1b[1;30;43mPandas corr():\x1b[0m \n\n{df.corr()}\n\n')
+                print(f'\x1b[1;30;42mDSLR Pearson\'s correlation coefficient:\x1b[0m \n\n{df_corr}\n\n')
+            else:
+                scatter_plot(df, df_corr)
+
+            if args.save:
+                plt.savefig(os.path.join(os.getcwd(), 'scatter_plot.png'))
+
+            plt.show()
         else:
-            scatter_plot(df, df_corr)
-
-        if args.save:
-            plt.savefig(os.path.join(os.getcwd(), 'scatter_plot.png'))
-
-        plt.show()
+            sys.exit(print(f'\x1b[1;37;41mEmpty DataFrame \x1b[0m\n'))
     else:
         sys.exit(print(f'\x1b[1;37;41mThe selected file must be a csv file \x1b[0m\n'))

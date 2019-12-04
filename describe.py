@@ -107,7 +107,7 @@ def describe(df):
     res_max = {}
     for col_name in list(df):
         if df[col_name].dtypes == 'int64' or df[col_name].dtypes == 'float64':
-            col = df[col_name].dropna().sort_values().reset_index(drop=True)
+            col = df[col_name].sort_values().reset_index(drop=True)
             col_length = len(col)
             res_count[col_name] = count(col, col_length)
             res_mean[col_name] = mean(col, col_length)
@@ -143,11 +143,15 @@ if __name__ == '__main__':
     file = os.path.join(os.getcwd(), args.csv_file)
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
         df = pd.read_csv(file)
-        df_described = describe(df)
-        if args.compare:
-            print(f'\x1b[1;30;43mPandas describe():\x1b[0m \n\n{df.describe()}\n\n')
-        print(f'\x1b[1;30;42mDSLR describe.py:\x1b[0m \n\n{df_described}\n\n')
-        if args.save:
-            df_described.to_excel(f'{os.path.basename(file).replace(".csv", "")}.xlsx')
+        df = df.dropna()
+        if not df.empty:
+            df_described = describe(df)
+            if args.compare:
+                print(f'\x1b[1;30;43mPandas describe():\x1b[0m \n\n{df.describe()}\n\n')
+            print(f'\x1b[1;30;42mDSLR describe.py:\x1b[0m \n\n{df_described}\n\n')
+            if args.save:
+                df_described.to_excel(f'{os.path.basename(file).replace(".csv", "")}.xlsx')
+        else:
+            sys.exit(print(f'\x1b[1;37;41mEmpty DataFrame \x1b[0m\n'))
     else:
         sys.exit(print(f'\x1b[1;37;41mThe selected file must be a csv file \x1b[0m\n'))

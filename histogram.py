@@ -51,12 +51,16 @@ if __name__ == '__main__':
     file = os.path.join(os.getcwd(), args.csv_file)
     if os.path.exists(file)and os.path.isfile(file) and file.endswith('.csv'):
         df = pd.read_csv(file)
-        df_described = describe(df)
-        std_bar_chart_plot(df_described)
+        df = df.dropna()
+        if not df.empty:
+            df_described = describe(df)
+            std_bar_chart_plot(df_described)
 
-        if args.save:
-            plt.savefig(os.path.join(os.getcwd(), 'std_bar_chart.png'))
+            if args.save:
+                plt.savefig(os.path.join(os.getcwd(), 'std_bar_chart.png'))
 
-        plt.show()
+            plt.show()
+        else:
+            sys.exit(print(f'\x1b[1;37;41mEmpty DataFrame \x1b[0m\n'))
     else:
         sys.exit(print(f'\x1b[1;37;41mThe selected file must be a csv file \x1b[0m\n'))
