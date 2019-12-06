@@ -1,6 +1,8 @@
 # DSLR
 ## Datascience X Logistic Regression
 
+Projet réalisé en équipe avec Freddy Pupier (https://github.com/pups-enterprise).
+
 
 The aim of this project is to introduce you to the basic concept behind linear classification based on the Harry Potter's Sorting Hat.
 For this project, you will have to create a one-vs-all classification using logistic regression, to sort Hogwarts students into houses.
