@@ -1,5 +1,5 @@
 # DSLR
-## Datascience X Logistic Regression
+## DataScience X Logistic Regression
 
 Projet réalisé en équipe avec Freddy Pupier (https://github.com/pups-enterprise).
 
